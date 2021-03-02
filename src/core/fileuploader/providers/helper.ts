@@ -295,6 +295,17 @@ export class CoreFileUploaderHelperProvider {
     }
 
     /**
+     * Is the given handler enabled for uploading. The names can be found in the
+     * handler files of this providers directory.
+     *
+     * @param  name The name of the provider
+     * @return      enabled?
+     */
+    isHandlerEnabled(name: string): boolean {
+      return this.uploaderDelegate.hasHandler(name, true);
+    }
+
+    /**
      * Open the "file picker" to select and upload a file.
      *
      * @param maxSize Max size of the file to upload. If not defined or -1, no max size.

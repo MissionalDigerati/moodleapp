@@ -21,6 +21,7 @@ import { CoreUtilsProvider } from '@providers/utils/utils';
 import { CoreTextUtilsProvider } from '@providers/utils/text';
 import { CoreDomUtilsProvider } from '@providers/utils/dom';
 import { CoreConstants } from '@core/constants';
+import { CoreFileUploaderHelperProvider } from '@core/fileuploader/providers/helper';
 
 /**
  * Component to display a "send message form".
@@ -45,6 +46,10 @@ export class CoreSendMessageFormComponent implements OnInit {
     @Output() onResize: EventEmitter<void>; // Emit when resizing the textarea.
 
     @ViewChild('messageForm') formElement: ElementRef;
+    /**
+     * Can we use the camera?
+     */
+    canUseCamera = false;
 
     protected sendOnEnter: boolean;
 
@@ -54,7 +59,8 @@ export class CoreSendMessageFormComponent implements OnInit {
             protected eventsProvider: CoreEventsProvider,
             protected sitesProvider: CoreSitesProvider,
             protected appProvider: CoreAppProvider,
-            protected domUtils: CoreDomUtilsProvider) {
+            protected domUtils: CoreDomUtilsProvider,
+            protected fileUploaderHelper: CoreFileUploaderHelperProvider) {
 
         this.onSubmit = new EventEmitter();
         this.onResize = new EventEmitter();
@@ -66,10 +72,40 @@ export class CoreSendMessageFormComponent implements OnInit {
         eventsProvider.on(CoreEventsProvider.SEND_ON_ENTER_CHANGED, (newValue) => {
             this.sendOnEnter = newValue;
         }, sitesProvider.getCurrentSiteId());
+
+        this.canUseCamera = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderCamera');
     }
 
     ngOnInit(): void {
         this.showKeyboard = this.utils.isTrueOrOne(this.showKeyboard);
+    }
+
+    /**
+     * Pick a photo to upload to the chat
+     *
+     * @param $event Event that triggered it.
+     */
+    pickPhoto($event: Event): void {
+      $event.preventDefault();
+      $event.stopPropagation();
+    }
+
+    /**
+     * Returns an empty string if we should shrink the text area, otherwise returns null
+     *
+     * @return an empty string or null
+     */
+    get whenShrunk(): string | null {
+      return ((!this.message) && (this.canUseCamera)) ? '' : null;
+    }
+
+    /**
+     * Returns an empty string if we should stretch the text area, otherwise returns null
+     *
+     * @return an empty string or null
+     */
+    get whenStretched(): string | null {
+      return ((this.message) || (!this.canUseCamera)) ? '' : null;
     }
 
     /**
