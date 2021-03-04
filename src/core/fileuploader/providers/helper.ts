@@ -38,10 +38,6 @@ export class CoreFileUploaderHelperProvider {
     protected logger;
     protected filePickerDeferred: PromiseDefer;
     protected actionSheet: ActionSheet;
-    /**
-     * The file area to store the uploaded file
-     */
-    protected fileArea = 'draft';
 
     constructor(logger: CoreLoggerProvider,
             protected appProvider: CoreAppProvider,
@@ -448,16 +444,12 @@ export class CoreFileUploaderHelperProvider {
      * @param upload        Whether the file should be uploaded.
      * @param allowOffline  True to allow selecting in offline, false to require connection.
      * @param mimetypes     List of supported mimetypes. If undefined, all mimetypes supported.
-     * @param  fileArea     Designate the file area where to store the file (default: draft)
      *
      * @return              The result returned from the web service
      * @link                https://docs.moodle.org/dev/Web_services_files_handling
      */
     triggerHandlerActionByName(handlerName: string, maxSize?: number, upload?: boolean, allowOffline?: boolean,
-        mimetypes?: string[], fileArea?: string): Promise<any> {
-        if (fileArea) {
-            this.fileArea = fileArea;
-        }
+        mimetypes?: string[]): Promise<any> {
         if (!this.uploaderDelegate.hasHandler(handlerName, true)) {
 
             return Promise.reject(`The handler ${handlerName} is not enabled!`);
@@ -876,10 +868,6 @@ export class CoreFileUploaderHelperProvider {
         }).then(() => {
             // File isn't too large and user confirmed, let's upload.
             const modal = this.domUtils.showModalLoading(uploadingStr);
-
-            if (!options.fileArea) {
-                options.fileArea = this.fileArea;
-            }
 
             return this.fileUploaderProvider.uploadFile(path, options, (progress: ProgressEvent) => {
                 // Progress uploading.

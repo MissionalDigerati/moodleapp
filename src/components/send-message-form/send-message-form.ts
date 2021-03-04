@@ -119,8 +119,7 @@ export class CoreSendMessageFormComponent implements OnInit {
             -1,
             true,
             false,
-            [],
-            'chat_attachments'
+            []
         ).then((result) => {
             const content = Sanitizer.encodeHTML(`<attachment type="${mediaType}" id="${result.itemid}">`);
             this.onSubmit.emit(content);
