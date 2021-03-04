@@ -38,6 +38,10 @@ export class CoreFileUploaderHelperProvider {
     protected logger;
     protected filePickerDeferred: PromiseDefer;
     protected actionSheet: ActionSheet;
+    /**
+     * The file area to store the uploaded file
+     */
+    protected fileArea = 'draft';
 
     constructor(logger: CoreLoggerProvider,
             protected appProvider: CoreAppProvider,
@@ -437,6 +441,84 @@ export class CoreFileUploaderHelperProvider {
     }
 
     /**
+     * Trigger the handler's action.  Handler's can be found in this directory.
+     *
+     * @param  handlerName  The name of the handler to use. See the handler file for the name
+     * @param maxSize       Max size of the file. If not defined or -1, no max size.
+     * @param upload        Whether the file should be uploaded.
+     * @param allowOffline  True to allow selecting in offline, false to require connection.
+     * @param mimetypes     List of supported mimetypes. If undefined, all mimetypes supported.
+     * @param  fileArea     Designate the file area where to store the file (default: draft)
+     *
+     * @return              The result returned from the web service
+     * @link                https://docs.moodle.org/dev/Web_services_files_handling
+     */
+    triggerHandlerActionByName(handlerName: string, maxSize?: number, upload?: boolean, allowOffline?: boolean,
+        mimetypes?: string[], fileArea?: string): Promise<any> {
+        if (fileArea) {
+            this.fileArea = fileArea;
+        }
+        if (!this.uploaderDelegate.hasHandler(handlerName, true)) {
+
+            return Promise.reject(`The handler ${handlerName} is not enabled!`);
+        }
+        const handler = this.uploaderDelegate.getHandlerDataByName(handlerName);
+        if (!handler) {
+
+            return Promise.reject(`The handler ${handlerName} is not available!`);
+        }
+        // Nothing to do, move along
+        if (!handler.action) {
+
+            return Promise.resolve(false);
+        }
+        if (!allowOffline && !this.appProvider.isOnline()) {
+            // Not allowed, show error.
+            this.domUtils.showErrorModal('core.fileuploader.errormustbeonlinetoupload', true);
+
+            return Promise.resolve(false);
+        }
+
+        if (handler.afterRender) {
+            setTimeout(() => {
+              handler.afterRender(maxSize, upload, allowOffline, handler.mimetypes);
+            }, 500);
+        }
+
+        return handler.action(maxSize, upload, allowOffline, handler.mimetypes).then((data) => {
+            if (data.treated) {
+                // The handler already treated the file. Return the result.
+
+                return data.result;
+            }
+            // The handler didn't treat the file, we need to do it.
+            if (data.fileEntry) {
+                // The handler provided us a fileEntry, use it.
+
+                return this.uploadFileEntry(data.fileEntry, data.delete, maxSize, upload, allowOffline);
+            }
+            if (data.path) {
+                // The handler provided a path. First treat it like it's a relative path.
+
+                return this.fileProvider.getFile(data.path).catch(() => {
+                    // File not found, it's probably an absolute path.
+
+                    return this.fileProvider.getExternalFile(data.path);
+                }).then((fileEntry) => {
+                    // File found, treat it.
+
+                    return this.uploadFileEntry(fileEntry, data.delete, maxSize, upload, allowOffline);
+                });
+            }
+
+            // Nothing received, fail.
+            return Promise.reject('No file received');
+        }).catch((error) => {
+            this.domUtils.showErrorModalDefault(error, this.translate.instant('core.fileuploader.errorreadingfile'));
+        });
+    }
+
+    /**
      * Convenience function to upload a file on a certain site, showing a confirm if needed.
      *
      * @param fileEntry FileEntry of the file to upload.
@@ -794,6 +876,10 @@ export class CoreFileUploaderHelperProvider {
         }).then(() => {
             // File isn't too large and user confirmed, let's upload.
             const modal = this.domUtils.showModalLoading(uploadingStr);
+
+            if (!options.fileArea) {
+                options.fileArea = this.fileArea;
+            }
 
             return this.fileUploaderProvider.uploadFile(path, options, (progress: ProgressEvent) => {
                 // Progress uploading.

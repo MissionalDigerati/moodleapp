@@ -22,6 +22,7 @@ import { CoreTextUtilsProvider } from '@providers/utils/text';
 import { CoreDomUtilsProvider } from '@providers/utils/dom';
 import { CoreConstants } from '@core/constants';
 import { CoreFileUploaderHelperProvider } from '@core/fileuploader/providers/helper';
+import { Sanitizer } from '@classes/sanitizer';
 
 /**
  * Component to display a "send message form".
@@ -81,13 +82,49 @@ export class CoreSendMessageFormComponent implements OnInit {
     }
 
     /**
-     * Pick a photo to upload to the chat
+     * Ad an attachment to the chat. Chat messages will be
+     * <attachment type="video" id="moodleFileID">
      *
-     * @param $event Event that triggered it.
+     * @param   mediaType   The type of media to attach (audio, document, photo, video)
+     * @param   $event      Event that triggered it.
+     * @return  void
      */
-    pickPhoto($event: Event): void {
-      $event.preventDefault();
-      $event.stopPropagation();
+    addAttachment(mediaType: string, $event: Event): void {
+        $event.preventDefault();
+        $event.stopPropagation();
+        let handlerName = '';
+        switch (mediaType) {
+            case 'audio':
+                handlerName = 'CoreFileUploaderAudio';
+                break;
+            case 'document':
+                handlerName = 'CoreFileUploaderFile';
+                break;
+            case 'photo':
+                handlerName = 'CoreFileUploaderCamera';
+                break;
+            case 'video':
+                handlerName = 'CoreFileUploaderVideo';
+                break;
+            default:
+                handlerName = '';
+                break;
+        }
+        if (handlerName === '') {
+
+            return;
+        }
+        this.fileUploaderHelper.triggerHandlerActionByName(
+            handlerName,
+            -1,
+            true,
+            false,
+            [],
+            'chat_attachments'
+        ).then((result) => {
+            const content = Sanitizer.encodeHTML(`<attachment type="${mediaType}" id="${result.itemid}">`);
+            this.onSubmit.emit(content);
+        });
     }
 
     /**
@@ -96,7 +133,7 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenShrunk(): string | null {
-      return ((!this.message) && (this.canUseCamera)) ? '' : null;
+        return ((!this.message) && (this.canUseCamera)) ? '' : null;
     }
 
     /**
@@ -105,7 +142,7 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenStretched(): string | null {
-      return ((this.message) || (!this.canUseCamera)) ? '' : null;
+        return ((this.message) || (!this.canUseCamera)) ? '' : null;
     }
 
     /**
