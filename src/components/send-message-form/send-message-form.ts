@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { CoreAppProvider } from '@providers/app';
 import { CoreConfigProvider } from '@providers/config';
 import { CoreEventsProvider } from '@providers/events';
@@ -23,6 +24,7 @@ import { CoreDomUtilsProvider } from '@providers/utils/dom';
 import { CoreConstants } from '@core/constants';
 import { CoreFileUploaderHelperProvider } from '@core/fileuploader/providers/helper';
 import { Sanitizer } from '@classes/sanitizer';
+import { take } from 'rxjs/operators';
 
 /**
  * Component to display a "send message form".
@@ -61,7 +63,8 @@ export class CoreSendMessageFormComponent implements OnInit {
             protected sitesProvider: CoreSitesProvider,
             protected appProvider: CoreAppProvider,
             protected domUtils: CoreDomUtilsProvider,
-            protected fileUploaderHelper: CoreFileUploaderHelperProvider) {
+            protected fileUploaderHelper: CoreFileUploaderHelperProvider,
+            protected http: HttpClient) {
 
         this.onSubmit = new EventEmitter();
         this.onResize = new EventEmitter();
@@ -122,7 +125,23 @@ export class CoreSendMessageFormComponent implements OnInit {
             []
         ).then((result) => {
             const content = Sanitizer.encodeHTML(`<attachment type="${mediaType}" id="${result.itemid}">`);
-            this.onSubmit.emit(content);
+
+            return this.sitesProvider.getSite().then((site) => {
+                const url = `${site.siteUrl}/local/chat_attachments/api.php`;
+                const headers = {
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                };
+                const params = {
+                    token: site.token,
+                    method: 'add_file',
+                    item_id: result.itemid,
+                };
+                this.http.post(url, params, headers).pipe(take(1)).subscribe(() => {
+                    this.onSubmit.emit(content);
+                });
+            });
         });
     }
 
