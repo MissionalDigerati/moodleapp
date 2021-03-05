@@ -124,7 +124,9 @@ export class CoreSendMessageFormComponent implements OnInit {
             false,
             []
         ).then((result) => {
-            const content = Sanitizer.encodeHTML(`<attachment type="${mediaType}" id="${result.itemid}">`);
+            const content = Sanitizer.encodeHTML(
+                `<attachment type="${mediaType}" id="${result.itemid}" filepath="${result.filepath}" filename="${result.filename}">`
+            );
 
             return this.sitesProvider.getSite().then((site) => {
                 const url = `${site.siteUrl}/local/chat_attachments/api.php`;
