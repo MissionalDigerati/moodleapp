@@ -62,6 +62,7 @@ import { CoreSyncProvider } from '@providers/sync';
 import { CoreFileHelperProvider } from '@providers/file-helper';
 import { CoreCustomURLSchemesProvider } from '@providers/urlschemes';
 import { CoreGeolocationProvider } from '@providers/geolocation';
+import { ChatAttachmentHelperProvider } from '@providers/chat-attachment-helper';
 
 // Handlers.
 import { CoreSiteInfoCronHandler } from '@providers/handlers/site-info-cron-handler';
@@ -348,6 +349,7 @@ export const WP_PROVIDER: any = null;
         CoreCustomURLSchemesProvider,
         CoreGeolocationProvider,
         CoreSiteInfoCronHandler,
+        ChatAttachmentHelperProvider,
         {
             provide: HTTP_INTERCEPTORS,
             useClass: CoreInterceptor,
