@@ -57,7 +57,7 @@ export class ChatAttachmentHelperProvider {
         const mediaFileName = /filename="(.*?)"/g.exec(actual);
         if (mediaType && mediaId && mediaFilePath && mediaFileName) {
             const url = `${this.siteDomain}${this.resourcePath}`;
-            if (mediaType[1] === 'photo') {
+            if (mediaType[1] === 'photo' || mediaType[1] === 'album') {
 
                 return `<p>
                     <img src="${url}${mediaId[1]}${mediaFilePath[1]}${mediaFileName[1]}" />

@@ -8,7 +8,7 @@
         <ion-grid>
           <ion-row>
             <ion-col text-right [hidden]="(message) || (!canUseCamera)">
-              <button ion-button icon-only clear="true" [core-suppress-events] (onClick)="addAttachment('photo', $event)">
+              <button ion-button icon-only clear="true" [core-suppress-events] (onClick)="pickPhoto($event)">
                   <ion-icon ios="ios-camera-outline" md="ios-camera-outline" color="dark"></ion-icon>
               </button>
             </ion-col>

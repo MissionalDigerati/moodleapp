@@ -14,6 +14,7 @@
 
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { ActionSheetController, ActionSheet } from 'ionic-angular';
 import { CoreAppProvider } from '@providers/app';
 import { CoreConfigProvider } from '@providers/config';
 import { CoreEventsProvider } from '@providers/events';
@@ -55,6 +56,10 @@ export class CoreSendMessageFormComponent implements OnInit {
     canUseCamera = false;
 
     protected sendOnEnter: boolean;
+    /**
+     * Our actionsheet for photo picking
+     */
+    protected actionSheet: ActionSheet;
 
     constructor(protected utils: CoreUtilsProvider,
             protected textUtils: CoreTextUtilsProvider,
@@ -64,7 +69,8 @@ export class CoreSendMessageFormComponent implements OnInit {
             protected appProvider: CoreAppProvider,
             protected domUtils: CoreDomUtilsProvider,
             protected fileUploaderHelper: CoreFileUploaderHelperProvider,
-            protected http: HttpClient) {
+            protected http: HttpClient,
+            protected actionSheetCtrl: ActionSheetController) {
 
         this.onSubmit = new EventEmitter();
         this.onResize = new EventEmitter();
@@ -84,6 +90,38 @@ export class CoreSendMessageFormComponent implements OnInit {
         this.showKeyboard = this.utils.isTrueOrOne(this.showKeyboard);
     }
 
+    pickPhoto($event: Event): void {
+        $event.preventDefault();
+        $event.stopPropagation();
+        this.actionSheet = this.actionSheetCtrl.create({
+            title: '',
+            cssClass: 'photo-picker-action',
+            buttons: [
+                {
+                    text: '',
+                    icon: 'camera',
+                    cssClass: 'side-by-side',
+                    handler: (): boolean => {
+                        this.addAttachment('photo', null);
+
+                        return true;
+                    }
+                },
+                {
+                    text: '',
+                    icon: 'images',
+                    cssClass: 'side-by-side',
+                    handler: (): boolean => {
+                        this.addAttachment('album', null);
+
+                        return true;
+                    }
+                }
+            ]
+        });
+        this.actionSheet.present();
+    }
+
     /**
      * Ad an attachment to the chat. Chat messages will be
      * <attachment type="video" id="moodleFileID">
@@ -93,10 +131,19 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return  void
      */
     addAttachment(mediaType: string, $event: Event): void {
-        $event.preventDefault();
-        $event.stopPropagation();
+        if ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+        }
+        if (this.actionSheet) {
+            this.actionSheet.dismiss();
+            this.actionSheet = null;
+        }
         let handlerName = '';
         switch (mediaType) {
+            case 'album':
+                handlerName = 'CoreFileUploaderAlbum';
+                break;
             case 'audio':
                 handlerName = 'CoreFileUploaderAudio';
                 break;
