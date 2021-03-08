@@ -57,11 +57,39 @@ export class ChatAttachmentHelperProvider {
         const mediaFileName = /filename="(.*?)"/g.exec(actual);
         if (mediaType && mediaId && mediaFilePath && mediaFileName) {
             const url = `${this.siteDomain}${this.resourcePath}`;
+            const mediaUrl = `${url}${mediaId[1]}${mediaFilePath[1]}${mediaFileName[1]}`;
             if (mediaType[1] === 'photo' || mediaType[1] === 'album') {
 
                 return `<p>
-                    <img src="${url}${mediaId[1]}${mediaFilePath[1]}${mediaFileName[1]}" />
+                    <img src="${mediaUrl}" />
                 </p>`;
+            }
+            if (mediaType[1] === 'video') {
+                const extension = mediaFileName[1].split('.').pop();
+                let mimeType = '';
+                switch (extension) {
+                    case 'ogg': {
+                        mimeType = 'video/ogg';
+                        break;
+                    }
+                    case 'mp4': {
+                        mimeType = 'video/mp4';
+                        break;
+                    }
+                    case 'webm': {
+                        mimeType = 'video/webm';
+                        break;
+                    }
+                    default: {
+                        mimeType = 'video/mp4';
+                        break;
+                    }
+
+                }
+
+                return `<video controls="true" class="video-attachment">
+                    <source src="${mediaUrl}" type="${mimeType}">
+                </video>`;
             }
         }
 

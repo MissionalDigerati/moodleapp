@@ -1,15 +1,20 @@
 <form #messageForm>
-  <ion-grid>
+  <ion-grid no-padding>
     <ion-row>
-      <ion-col [attr.col-lg-9]="whenShrunk" [attr.col-lg-10]="whenStretched" [attr.col-md-8]="whenShrunk" [attr.col-md-10]="whenStretched" [attr.col-sm-6]="whenShrunk" [attr.col-sm-9]="whenStretched" [attr.col-6]="whenShrunk" [attr.col-9]="whenStretched" class="message-input">
+      <ion-col [attr.col-lg-8]="whenShrunk" [attr.col-lg-10]="whenStretched" [attr.col-md-7]="whenShrunk" [attr.col-md-10]="whenStretched" [attr.col-sm-5]="whenShrunk" [attr.col-sm-9]="whenStretched" [attr.col-5]="whenShrunk" [attr.col-9]="whenStretched" class="message-input">
         <textarea class="core-send-message-input" [core-auto-focus]="showKeyboard" [placeholder]="placeholder" rows="1" core-auto-rows [(ngModel)]="message" name="message" (onResize)="textareaResized()" (keydown.enter)="enterClicked($event)" (keydown.control.enter)="enterClicked($event, 'control')" (keydown.meta.enter)="enterClicked($event, 'meta')" aria-multiline="true"></textarea>
       </ion-col>
-      <ion-col [attr.col-lg-3]="whenShrunk" [attr.col-lg-2]="whenStretched" [attr.col-md-4]="whenShrunk" [attr.col-md-2]="whenStretched" [attr.col-sm-6]="whenShrunk" [attr.col-sm-3]="whenStretched" [attr.col-6]="whenShrunk" [attr.col-3]="whenStretched" end>
-        <ion-grid>
+      <ion-col [attr.col-lg-4]="whenShrunk" [attr.col-lg-2]="whenStretched" [attr.col-md-5]="whenShrunk" [attr.col-md-2]="whenStretched" [attr.col-sm-7]="whenShrunk" [attr.col-sm-3]="whenStretched" [attr.col-7]="whenShrunk" [attr.col-3]="whenStretched" end>
+        <ion-grid no-padding>
           <ion-row>
             <ion-col text-right [hidden]="(message) || (!canUseCamera)">
               <button ion-button icon-only clear="true" [core-suppress-events] (onClick)="pickPhoto($event)">
                   <ion-icon ios="ios-camera-outline" md="ios-camera-outline" color="dark"></ion-icon>
+              </button>
+            </ion-col>
+            <ion-col text-right [hidden]="(message) || (!canUseVideo)">
+              <button ion-button icon-only clear="true" [core-suppress-events] (onClick)="addAttachment('video', $event)">
+                  <ion-icon ios="ios-videocam-outline" md="ios-videocam-outline" color="dark"></ion-icon>
               </button>
             </ion-col>
             <ion-col text-right>

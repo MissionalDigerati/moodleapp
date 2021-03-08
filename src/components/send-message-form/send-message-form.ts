@@ -54,6 +54,10 @@ export class CoreSendMessageFormComponent implements OnInit {
      * Can we use the camera?
      */
     canUseCamera = false;
+    /**
+     * Can we use the video recorder?
+     */
+    canUseVideo = false;
 
     protected sendOnEnter: boolean;
     /**
@@ -84,12 +88,19 @@ export class CoreSendMessageFormComponent implements OnInit {
         }, sitesProvider.getCurrentSiteId());
 
         this.canUseCamera = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderCamera');
+        this.canUseVideo = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderVideo');
     }
 
     ngOnInit(): void {
         this.showKeyboard = this.utils.isTrueOrOne(this.showKeyboard);
     }
 
+    /**
+     * Pick whether to use the camera or the album?
+     *
+     * @param $event The event that triggered this.
+     *
+     */
     pickPhoto($event: Event): void {
         $event.preventDefault();
         $event.stopPropagation();
@@ -200,7 +211,7 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenShrunk(): string | null {
-        return ((!this.message) && (this.canUseCamera)) ? '' : null;
+        return ((!this.message) && (this.canUseCamera || this.canUseVideo)) ? '' : null;
     }
 
     /**
@@ -209,7 +220,7 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenStretched(): string | null {
-        return ((this.message) || (!this.canUseCamera)) ? '' : null;
+        return ((this.message) || ((!this.canUseCamera) && (!this.canUseVideo))) ? '' : null;
     }
 
     /**
