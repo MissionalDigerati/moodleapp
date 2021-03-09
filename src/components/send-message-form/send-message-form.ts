@@ -182,6 +182,9 @@ export class CoreSendMessageFormComponent implements OnInit {
             false,
             []
         ).then((result) => {
+            if (!('itemid' in result)) {
+                return;
+            }
             const content = Sanitizer.encodeHTML(
                 `<attachment type="${mediaType}" id="${result.itemid}" filepath="${result.filepath}" filename="${result.filename}">`
             );
