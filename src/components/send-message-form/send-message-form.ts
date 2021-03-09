@@ -133,7 +133,15 @@ export class CoreSendMessageFormComponent implements OnInit {
                 }
             ]
         });
-        this.actionSheet.present();
+        this.checkPermission(this.androidPermissions.PERMISSION.CAMERA).then((result: boolean) => {
+            if (result) {
+                this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+                    if (result) {
+                        this.actionSheet.present();
+                    }
+                });
+            }
+        });
     }
 
     /**
@@ -142,7 +150,6 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @param $event The event that triggered this.
      */
     pickVideo($event: Event): void {
-        console.log('Checking camera permission.');
         this.checkPermission(this.androidPermissions.PERMISSION.CAMERA).then((result: boolean) => {
             if (result) {
                 this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
