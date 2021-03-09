@@ -13,7 +13,7 @@
               </button>
             </ion-col>
             <ion-col text-right [hidden]="(message) || (!canUseVideo)">
-              <button ion-button icon-only clear="true" [core-suppress-events] (onClick)="addAttachment('video', $event)">
+              <button ion-button icon-only clear="true" [core-suppress-events] (onClick)="pickVideo($event)">
                   <ion-icon ios="ios-videocam-outline" md="ios-videocam-outline" color="dark"></ion-icon>
               </button>
             </ion-col>

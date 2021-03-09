@@ -14,7 +14,8 @@
 
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ActionSheetController, ActionSheet } from 'ionic-angular';
+import { ActionSheetController, ActionSheet, Platform } from 'ionic-angular';
+import { AndroidPermissions } from '@ionic-native/android-permissions';
 import { CoreAppProvider } from '@providers/app';
 import { CoreConfigProvider } from '@providers/config';
 import { CoreEventsProvider } from '@providers/events';
@@ -74,7 +75,9 @@ export class CoreSendMessageFormComponent implements OnInit {
             protected domUtils: CoreDomUtilsProvider,
             protected fileUploaderHelper: CoreFileUploaderHelperProvider,
             protected http: HttpClient,
-            protected actionSheetCtrl: ActionSheetController) {
+            protected actionSheetCtrl: ActionSheetController,
+            protected androidPermissions: AndroidPermissions,
+            protected platform: Platform) {
 
         this.onSubmit = new EventEmitter();
         this.onResize = new EventEmitter();
@@ -131,6 +134,24 @@ export class CoreSendMessageFormComponent implements OnInit {
             ]
         });
         this.actionSheet.present();
+    }
+
+    /**
+     * We want to pick a video file.
+     *
+     * @param $event The event that triggered this.
+     */
+    pickVideo($event: Event): void {
+        console.log('Checking camera permission.');
+        this.checkPermission(this.androidPermissions.PERMISSION.CAMERA).then((result: boolean) => {
+            if (result) {
+                this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+                    if (result) {
+                        this.addAttachment('video', $event);
+                    }
+                });
+            }
+        });
     }
 
     /**
@@ -204,6 +225,25 @@ export class CoreSendMessageFormComponent implements OnInit {
                 this.http.post(url, params, headers).pipe(take(1)).subscribe(() => {
                     this.onSubmit.emit(content);
                 });
+            });
+        });
+    }
+
+    protected checkPermission(permission: any): Promise<any> {
+        if (!this.platform.is('android')) {
+
+            return Promise.resolve(true);
+        }
+
+        return this.androidPermissions.checkPermission(permission).then((result: any) => {
+            if (result.hasPermission) {
+
+                return Promise.resolve(true);
+            }
+
+            return this.androidPermissions.requestPermission(permission).then((reqResult: any) => {
+
+                return Promise.resolve(reqResult.hasPermission);
             });
         });
     }
