@@ -58,41 +58,98 @@ export class ChatAttachmentHelperProvider {
         if (mediaType && mediaId && mediaFilePath && mediaFileName) {
             const url = `${this.siteDomain}${this.resourcePath}`;
             const mediaUrl = `${url}${mediaId[1]}${mediaFilePath[1]}${mediaFileName[1]}`;
+            const extension = mediaFileName[1].split('.').pop();
             if (mediaType[1] === 'photo' || mediaType[1] === 'album') {
 
-                return `<p>
-                    <img src="${mediaUrl}" />
-                </p>`;
+                return this.displayImage(mediaUrl);
             }
             if (mediaType[1] === 'video') {
-                const extension = mediaFileName[1].split('.').pop();
-                let mimeType = '';
-                switch (extension) {
-                    case 'ogg': {
-                        mimeType = 'video/ogg';
-                        break;
-                    }
-                    case 'mp4': {
-                        mimeType = 'video/mp4';
-                        break;
-                    }
-                    case 'webm': {
-                        mimeType = 'video/webm';
-                        break;
-                    }
-                    default: {
-                        mimeType = 'video/mp4';
-                        break;
-                    }
 
+                return this.displayVideo(mediaUrl, extension);
+            }
+            if (mediaType[1] === 'document') {
+                let content = '';
+                switch (extension) {
+                    case 'webm':
+                    case 'ogg':
+                    case 'mp4':
+                        content = this.displayVideo(mediaUrl, extension);
+                        break;
+                    case 'jpg':
+                    case 'jpeg':
+                    case 'png':
+                    case 'gif':
+                        content = this.displayImage(mediaUrl);
+                        break;
+                    default:
+                        content = this.displayLink(mediaUrl, mediaFileName[1]);
+                        break;
                 }
 
-                return `<video controls="true" class="video-attachment">
-                    <source src="${mediaUrl}" type="${mimeType}">
-                </video>`;
+                return content;
             }
         }
 
         return '<p>Unavailable Media</p>';
+    }
+
+    /**
+     * Get the HTML to display an image
+     *
+     * @param  url The URL for the media file
+     *
+     * @return     The HTML markup
+     */
+    private displayImage(url: string): string {
+        return `<p>
+            <img src="${url}" />
+        </p>`;
+    }
+
+    /**
+     * Get the HTML to display a link
+     *
+     * @param  url The URL for the media file
+     *
+     * @return     The HTML markup
+     */
+    private displayLink(url: string, fileName: string): string {
+        return `<p class="attachment-message">
+            <a href="${url}" target="_blank"><i class="icomoon-attachment"></i> ${fileName}</a>
+        </p>`;
+    }
+
+    /**
+     * Get the HTML to display a video
+     *
+     * @param   url         The URL for the media file
+     * @param   extension   The extension of the file
+     *
+     * @return     The HTML markup
+     */
+    private displayVideo(url: string, extension: string): string {
+        let mimeType = '';
+        switch (extension) {
+            case 'ogg': {
+                mimeType = 'video/ogg';
+                break;
+            }
+            case 'mp4': {
+                mimeType = 'video/mp4';
+                break;
+            }
+            case 'webm': {
+                mimeType = 'video/webm';
+                break;
+            }
+            default: {
+                mimeType = 'video/mp4';
+                break;
+            }
+        }
+
+        return `<video controls="true" class="video-attachment" poster="assets/img/video-poster.png">
+            <source src="${url}" type="${mimeType}">
+        </video>`;
     }
 }

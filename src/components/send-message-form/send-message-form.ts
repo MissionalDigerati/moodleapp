@@ -59,6 +59,10 @@ export class CoreSendMessageFormComponent implements OnInit {
      * Can we use the video recorder?
      */
     canUseVideo = false;
+    /**
+     * Can we get an attachment?
+     */
+    canGetAttachment = false;
 
     protected sendOnEnter: boolean;
     /**
@@ -92,10 +96,25 @@ export class CoreSendMessageFormComponent implements OnInit {
 
         this.canUseCamera = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderCamera');
         this.canUseVideo = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderVideo');
+        this.canGetAttachment = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderFile');
     }
 
     ngOnInit(): void {
         this.showKeyboard = this.utils.isTrueOrOne(this.showKeyboard);
+    }
+
+    /**
+     * Pick whether to use the camera or the album?
+     *
+     * @param $event The event that triggered this.
+     *
+     */
+    pickAttachment($event: Event): void {
+        this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+            if (result) {
+                this.addAttachment('document', $event);
+            }
+        });
     }
 
     /**
@@ -261,7 +280,7 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenShrunk(): string | null {
-        return ((!this.message) && (this.canUseCamera || this.canUseVideo)) ? '' : null;
+        return ((!this.message) && (this.canUseCamera || this.canUseVideo || this.canGetAttachment)) ? '' : null;
     }
 
     /**
@@ -270,7 +289,7 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenStretched(): string | null {
-        return ((this.message) || ((!this.canUseCamera) && (!this.canUseVideo))) ? '' : null;
+        return ((this.message) || ((!this.canUseCamera) && (!this.canUseVideo) && (!this.canGetAttachment))) ? '' : null;
     }
 
     /**

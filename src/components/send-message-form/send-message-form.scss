@@ -16,6 +16,19 @@ ion-app.app-root {
         line-height: .67;
     }
 
+    p.attachment-message a {
+        background-color: $white;
+        border: 1px solid $gray-darker;
+        display: inline-block;
+        font-size: 1.6REM;
+        padding: 1em;
+        text-decoration: none;
+    }
+
+    .video-attachment {
+        object-fit: cover;
+    }
+
     core-send-message-form {
       background: $white;
 
