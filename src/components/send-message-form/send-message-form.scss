@@ -11,6 +11,11 @@ ion-app.app-root {
         }
     }
 
+    .icomoon-attachment {
+        padding: 0 0.8em;
+        line-height: .67;
+    }
+
     core-send-message-form {
       background: $white;
 
