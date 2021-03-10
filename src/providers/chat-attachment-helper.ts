@@ -159,7 +159,7 @@ export class ChatAttachmentHelperProvider {
                 return this.displayLink(url, fileName);
         }
 
-        return `<audio controls="true" class="audio-attachment video-js" title="${fileName}">
+        return `<audio controls="true" class="audio-attachment video-js no-full-width" title="${fileName}">
             <source src="${url}" type="${mimeType}">
             <a href="${url}" target="_blank"><i class="icomoon-attachment"></i> ${fileName}</a>
         </audio>`;
