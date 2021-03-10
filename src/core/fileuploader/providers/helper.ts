@@ -621,11 +621,8 @@ export class CoreFileUploaderHelperProvider {
 
             media = medias[0]; // We used limit 1, we only want 1 media.
         } catch (error) {
-
-            if (isAudio && this.isNoAppError(error) && this.appProvider.isMobile() &&
-                    (!this.platform.is('android') || this.platform.version().major < 10)) {
+            if (isAudio && this.isNoAppError(error) && this.appProvider.isMobile()) {
                 // No app to record audio, fallback to capture it ourselves.
-                // In Android it will only be done in Android 9 or lower because there's a bug in the plugin.
                 try {
                     media = await this.fileUploaderProvider.captureAudioInApp();
                 } catch (error) {
