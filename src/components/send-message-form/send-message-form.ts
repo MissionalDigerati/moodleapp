@@ -52,6 +52,10 @@ export class CoreSendMessageFormComponent implements OnInit {
 
     @ViewChild('messageForm') formElement: ElementRef;
     /**
+     * Can we use the audio?
+     */
+    canUseAudio = false;
+    /**
      * Can we use the camera?
      */
     canUseCamera = false;
@@ -94,6 +98,7 @@ export class CoreSendMessageFormComponent implements OnInit {
             this.sendOnEnter = newValue;
         }, sitesProvider.getCurrentSiteId());
 
+        this.canUseAudio = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderAudio');
         this.canUseCamera = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderCamera');
         this.canUseVideo = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderVideo');
         this.canGetAttachment = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderFile');
@@ -113,6 +118,24 @@ export class CoreSendMessageFormComponent implements OnInit {
         this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
             if (result) {
                 this.addAttachment('document', $event);
+            }
+        });
+    }
+
+    /**
+     * Pick the audio recording
+     *
+     * @param $event The event that triggered this.
+     *
+     */
+    pickAudio($event: Event): void {
+        this.checkPermission(this.androidPermissions.PERMISSION.RECORD_AUDIO).then((result: boolean) => {
+            if (result) {
+                this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+                    if (result) {
+                        this.addAttachment('audio', $event);
+                    }
+                });
             }
         });
     }
@@ -173,7 +196,11 @@ export class CoreSendMessageFormComponent implements OnInit {
             if (result) {
                 this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
                     if (result) {
-                        this.addAttachment('video', $event);
+                        this.checkPermission(this.androidPermissions.PERMISSION.RECORD_AUDIO).then((result: boolean) => {
+                            if (result) {
+                                this.addAttachment('video', $event);
+                            }
+                        });
                     }
                 });
             }
@@ -280,7 +307,10 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenShrunk(): string | null {
-        return ((!this.message) && (this.canUseCamera || this.canUseVideo || this.canGetAttachment)) ? '' : null;
+        return (
+            (!this.message) &&
+            (this.canUseCamera || this.canUseVideo || this.canGetAttachment || this.canUseAudio)
+        ) ? '' : null;
     }
 
     /**
@@ -289,7 +319,10 @@ export class CoreSendMessageFormComponent implements OnInit {
      * @return an empty string or null
      */
     get whenStretched(): string | null {
-        return ((this.message) || ((!this.canUseCamera) && (!this.canUseVideo) && (!this.canGetAttachment))) ? '' : null;
+        return (
+            (this.message) ||
+            ((!this.canUseCamera) && (!this.canUseVideo) && (!this.canGetAttachment) && (!this.canUseAudio))
+        ) ? '' : null;
     }
 
     /**

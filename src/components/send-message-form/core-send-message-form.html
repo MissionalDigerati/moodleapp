@@ -17,6 +17,11 @@
                 <ion-icon ios="ios-videocam-outline" md="ios-videocam-outline" color="dark"></ion-icon>
               </button>
             </ion-col>
+            <ion-col text-right [hidden]="(message) || (!canUseAudio)">
+              <button ion-button icon-only clear="true" [core-suppress-events] (onClick)="pickAudio($event)">
+                <ion-icon ios="ios-mic-outline" md="ios-mic-outline" color="dark"></ion-icon>
+              </button>
+            </ion-col>
             <ion-col text-right [hidden]="(message) || (!canGetAttachment)">
               <button ion-button icon-only clear="true" [core-suppress-events] color="dark" (onClick)="pickAttachment($event)">
                 <i class="icomoon-attachment"></i>

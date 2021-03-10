@@ -59,21 +59,37 @@ export class ChatAttachmentHelperProvider {
             const url = `${this.siteDomain}${this.resourcePath}`;
             const mediaUrl = `${url}${mediaId[1]}${mediaFilePath[1]}${mediaFileName[1]}`;
             const extension = mediaFileName[1].split('.').pop();
+            if (mediaType[1] === 'audio') {
+
+                return this.displayAudio(mediaUrl, mediaFileName[1], extension);
+            }
             if (mediaType[1] === 'photo' || mediaType[1] === 'album') {
 
                 return this.displayImage(mediaUrl);
             }
             if (mediaType[1] === 'video') {
 
-                return this.displayVideo(mediaUrl, extension);
+                return this.displayVideo(mediaUrl, mediaFileName[1], extension);
             }
             if (mediaType[1] === 'document') {
                 let content = '';
                 switch (extension) {
+                    case '3gp':
+                    case '3gp2':
+                    case 'aac':
+                    case 'aiff':
+                    case 'amr':
+                    case 'mp3':
+                    case 'm4a':
+                    case 'm4b':
+                    case 'm4p':
+                    case 'wav':
+                        content = this.displayAudio(mediaUrl, mediaFileName[1], extension);
+                        break;
                     case 'webm':
                     case 'ogg':
                     case 'mp4':
-                        content = this.displayVideo(mediaUrl, extension);
+                        content = this.displayVideo(mediaUrl, mediaFileName[1], extension);
                         break;
                     case 'jpg':
                     case 'jpeg':
@@ -81,6 +97,7 @@ export class ChatAttachmentHelperProvider {
                     case 'gif':
                         content = this.displayImage(mediaUrl);
                         break;
+
                     default:
                         content = this.displayLink(mediaUrl, mediaFileName[1]);
                         break;
@@ -91,6 +108,61 @@ export class ChatAttachmentHelperProvider {
         }
 
         return '<p>Unavailable Media</p>';
+    }
+
+    /**
+     * Get the HTML to display an audio tag
+     *
+     * @param   url         The URL for the media file
+     * @param   fileName    The file's name
+     * @param   extension   The extension of the file
+     *
+     * @return     The HTML markup
+     */
+    private displayAudio(url: string, fileName: string, extension: string): string {
+        let mimeType = '';
+        switch (extension) {
+            case '3gp':
+                mimeType = 'audio/3gpp';
+                break;
+            case '3gp2':
+                mimeType = 'audio/3gpp2';
+                break;
+            case 'aac':
+                mimeType = 'audio/aac';
+                break;
+            case 'aiff':
+                mimeType = 'audio/aiff';
+                break;
+            case 'amr':
+                mimeType = 'audio/amr';
+                break;
+            case 'mp3':
+                mimeType = 'audio/mp3';
+                break;
+            case 'mp4':
+                mimeType = 'audio/mp4';
+                break;
+            case 'm4a':
+                mimeType = 'audio/x-m4a';
+                break;
+            case 'm4b':
+                mimeType = 'audio/x-m4b';
+                break;
+            case 'm4p':
+                mimeType = 'audio/x-m4p';
+                break;
+            case 'wav':
+                mimeType = 'audio/wav';
+                break;
+            default:
+                return this.displayLink(url, fileName);
+        }
+
+        return `<audio controls="true" class="audio-attachment video-js" title="${fileName}">
+            <source src="${url}" type="${mimeType}">
+            <a href="${url}" target="_blank"><i class="icomoon-attachment"></i> ${fileName}</a>
+        </audio>`;
     }
 
     /**
@@ -109,7 +181,8 @@ export class ChatAttachmentHelperProvider {
     /**
      * Get the HTML to display a link
      *
-     * @param  url The URL for the media file
+     * @param  url          The URL for the media file
+     * @param   fileName    The file's name
      *
      * @return     The HTML markup
      */
@@ -123,29 +196,25 @@ export class ChatAttachmentHelperProvider {
      * Get the HTML to display a video
      *
      * @param   url         The URL for the media file
+     * @param   fileName    The file's name
      * @param   extension   The extension of the file
      *
      * @return     The HTML markup
      */
-    private displayVideo(url: string, extension: string): string {
+    private displayVideo(url: string, fileName: string, extension: string): string {
         let mimeType = '';
         switch (extension) {
-            case 'ogg': {
+            case 'ogg':
                 mimeType = 'video/ogg';
                 break;
-            }
-            case 'mp4': {
+            case 'mp4':
                 mimeType = 'video/mp4';
                 break;
-            }
-            case 'webm': {
+            case 'webm':
                 mimeType = 'video/webm';
                 break;
-            }
-            default: {
-                mimeType = 'video/mp4';
-                break;
-            }
+            default:
+                return this.displayLink(url, fileName);
         }
 
         return `<video controls="true" class="video-attachment" poster="assets/img/video-poster.png">
