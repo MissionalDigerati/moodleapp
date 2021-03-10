@@ -219,6 +219,7 @@ export class ChatAttachmentHelperProvider {
 
         return `<video controls="true" class="video-attachment" poster="assets/img/video-poster.png">
             <source src="${url}" type="${mimeType}">
+            <a href="${url}" target="_blank"><i class="icomoon-attachment"></i> ${fileName}</a>
         </video>`;
     }
 }
