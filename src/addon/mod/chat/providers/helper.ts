@@ -15,6 +15,7 @@
 import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { CoreTextUtilsProvider } from '@providers/utils/text';
+import { ChatAttachmentHelperProvider } from '@providers/chat-attachment-helper';
 import * as moment from 'moment';
 import { AddonModChatMessageWithUserData, AddonModChatSessionMessageWithUserData } from './chat';
 
@@ -27,7 +28,8 @@ export class AddonModChatHelperProvider {
     static patternto = new RegExp(/^To\s([^:]+):(.*)/);
 
     constructor(protected translate: TranslateService,
-        protected textUtils: CoreTextUtilsProvider) {
+        protected textUtils: CoreTextUtilsProvider,
+        protected chatAttachmentHelper: ChatAttachmentHelperProvider) {
 
     }
 
@@ -41,7 +43,7 @@ export class AddonModChatHelperProvider {
      */
     formatMessage(currentUserId: number, message: AddonModChatMessageForView | AddonModChatSessionMessageForView,
             prevMessage?: AddonModChatMessageForView | AddonModChatSessionMessageForView): any {
-        message.message = message.message.trim();
+        message.message = this.chatAttachmentHelper.prepareMessage(message.message.trim());
 
         message.showDate = this.showDate(message, prevMessage);
         message.beep = message.message.substr(0, 5) == 'beep ' && message.message.substr(5).trim();
