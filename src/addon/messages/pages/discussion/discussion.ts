@@ -29,6 +29,7 @@ import { CoreUtilsProvider } from '@providers/utils/utils';
 import { CoreTextUtilsProvider } from '@providers/utils/text';
 import { CoreLoggerProvider } from '@providers/logger';
 import { CoreAppProvider } from '@providers/app';
+import { ChatAttachmentHelperProvider } from '@providers/chat-attachment-helper';
 import { coreSlideInOut } from '@classes/animations';
 import { CoreSplitViewComponent } from '@components/split-view/split-view';
 import { CoreInfiniteLoadingComponent } from '@components/infinite-loading/infinite-loading';
@@ -98,8 +99,9 @@ export class AddonMessagesDiscussionPage implements OnDestroy {
     muteIcon = 'volume-off';
     newMessages = 0;
 
-    constructor(private eventsProvider: CoreEventsProvider, sitesProvider: CoreSitesProvider, navParams: NavParams,
-            private userProvider: CoreUserProvider, private navCtrl: NavController, private messagesSync: AddonMessagesSyncProvider,
+    constructor(private chatAttachmentHelper: ChatAttachmentHelperProvider, private eventsProvider: CoreEventsProvider,
+            sitesProvider: CoreSitesProvider, navParams: NavParams, private userProvider: CoreUserProvider,
+            private navCtrl: NavController, private messagesSync: AddonMessagesSyncProvider,
             private domUtils: CoreDomUtilsProvider, private messagesProvider: AddonMessagesProvider, logger: CoreLoggerProvider,
             private utils: CoreUtilsProvider, private appProvider: CoreAppProvider, private translate: TranslateService,
             @Optional() private svComponent: CoreSplitViewComponent, private messagesOffline: AddonMessagesOfflineProvider,
@@ -158,6 +160,7 @@ export class AddonMessagesDiscussionPage implements OnDestroy {
         let added = false;
         if (typeof this.keepMessageMap[message.hash] === 'undefined') {
             // Message not added to the list. Add it now.
+            message.text = this.chatAttachmentHelper.prepareMessage(message.text);
             this.messages.push(message);
             added = message.useridfrom != this.currentUserId;
         }
