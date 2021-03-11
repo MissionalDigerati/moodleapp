@@ -144,6 +144,9 @@ export class CoreFormatTextDirective implements OnChanges {
      */
     protected addMediaAdaptClass(element: HTMLElement): void {
         element.classList.add('core-media-adapt-width');
+        if (!element.classList.contains('no-full-width')) {
+            element.classList.add('full-width');
+        }
     }
 
     /**
