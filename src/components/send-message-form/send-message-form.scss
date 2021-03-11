@@ -2,9 +2,6 @@ $core-send-message-input-background: $gray;
 $core-send-message-input-color: $black;
 
 ion-app.app-root {
-    audio.core-media-adapt-width.audio-attachment {
-        width: revert !important;
-    }
 
     .side-by-side {
         width: 50% !important;
