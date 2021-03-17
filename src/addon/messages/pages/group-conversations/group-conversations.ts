@@ -46,6 +46,10 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
     selectedUserId: number;
     contactRequestsCount = 0;
     /**
+     * Do you want to only show favorites?
+     */
+    showOnlyFavourites = false;
+    /**
      * Settings to get all messages
      */
     all: AddonMessagesGroupConversationOption = {
@@ -228,7 +232,9 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
     protected fetchData(): Promise<any> {
         this.loadingMessage = this.loadingString;
 
-        return this.fetchDataForOption(this.all, false).catch((error) => {
+        return this.fetchDataForOption(this.all, false).then(() => {
+            console.log(this.all.conversations);
+        }).catch((error) => {
             this.domUtils.showErrorModalDefault(error, 'addon.messages.errorwhileretrievingdiscussions', true);
         }).finally(() => {
             this.loaded = true;
@@ -468,6 +474,13 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
      */
     gotoSearch(): void {
         this.navCtrl.push('AddonMessagesSearchPage');
+    }
+
+    /**
+     * Toggle whether to show favorites or not
+     */
+    toggleFavourites(): void {
+        this.showOnlyFavourites = !this.showOnlyFavourites;
     }
 
     /**

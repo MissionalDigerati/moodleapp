@@ -2,6 +2,10 @@
     <ion-navbar core-back-button>
         <ion-title>{{ 'addon.messages.messages' | translate }}</ion-title>
         <ion-buttons end>
+            <button ion-button icon-only (click)="toggleFavourites()" [attr.aria-label]="'core.favourites' | translate">
+              <div [hidden]="showOnlyFavourites"><core-icon name="fa-star-o"></core-icon></div>
+              <div [hidden]="!showOnlyFavourites"><core-icon name="fa-star"></core-icon></div>
+            </button>
             <button ion-button icon-only (click)="gotoSearch()" [attr.aria-label]="'addon.messages.search' | translate">
                 <ion-icon name="search"></ion-icon>
             </button>
@@ -45,7 +49,7 @@
 
 <!-- Template to render a list of conversations. -->
 <ng-template #conversationsTemplate let-conversations="conversations">
-    <a ion-item text-wrap *ngFor="let conversation of conversations" [title]="conversation.name" (click)="gotoConversation(conversation.id, conversation.userid)" [class.core-split-item-selected]="(conversation.id && conversation.id == selectedConversationId) || (conversation.userid && conversation.userid == selectedUserId)" class="addon-message-discussion" id="addon-message-conversation-{{ conversation.id ? conversation.id : 'user-' + conversation.userid }}">
+    <a [hidden]="showOnlyFavourites && (!conversation.isfavourite)" ion-item text-wrap *ngFor="let conversation of conversations" [title]="conversation.name" (click)="gotoConversation(conversation.id, conversation.userid)" [class.core-split-item-selected]="(conversation.id && conversation.id == selectedConversationId) || (conversation.userid && conversation.userid == selectedUserId)" class="addon-message-discussion" id="addon-message-conversation-{{ conversation.id ? conversation.id : 'user-' + conversation.userid }}">
         <!-- Group conversation image. -->
         <ion-avatar item-start *ngIf="conversation.type == typeGroup">
             <img [src]="conversation.imageurl" [alt]="conversation.name" core-external-content onError="this.src='assets/img/group-avatar.png'">
