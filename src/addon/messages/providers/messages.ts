@@ -687,11 +687,11 @@ export class AddonMessagesProvider {
      */
     protected getClassPeers(siteId?: string, ids: number[] = []): Promise<any[]> {
 
-        return this.courseProvider.getUserCourses(false, siteId).then((courses: any[]) => {
+        return this.courseProvider.getUserCourses(true, siteId).then((courses: any[]) => {
             const promises = [];
             courses.forEach((course: any) => {
                 promises.push(
-                    this.userProvider.getParticipants(course.id, 0, -1, siteId, true).then((data) => {
+                    this.userProvider.getParticipants(course.id, 0, -1, siteId, false).then((data) => {
                         return data.participants;
                     })
                 );
