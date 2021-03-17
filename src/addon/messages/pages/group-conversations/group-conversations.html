@@ -2,6 +2,9 @@
     <ion-navbar core-back-button>
         <ion-title>{{ 'addon.messages.messages' | translate }}</ion-title>
         <ion-buttons end>
+            <button ion-button icon-only (click)="gotoContacts($event)" [attr.aria-label]="'addon.messages.contacts' | translate">
+              <core-icon name="fa-pencil-square-o"></core-icon>
+            </button>
             <button ion-button icon-only (click)="toggleFavourites()" [attr.aria-label]="'core.favourites' | translate">
               <div [hidden]="showOnlyFavourites"><core-icon name="fa-star-o"></core-icon></div>
               <div [hidden]="!showOnlyFavourites"><core-icon name="fa-star"></core-icon></div>
@@ -25,11 +28,6 @@
 
         <core-loading [hideUntil]="loaded" [message]="loadingMessage">
             <ion-list>
-                <a ion-item text-wrap (click)="gotoContacts($event)" [attr.aria-label]="'addon.messages.contacts' | translate" class="addon-message-discussion">
-                    <ion-icon name="person" item-start></ion-icon>
-                    <h2>{{ 'addon.messages.contacts' | translate }}</h2>
-                    <ion-badge *ngIf="contactRequestsCount > 0" item-end>{{contactRequestsCount}}</ion-badge>
-                </a>
                 <!-- All conversations. -->
                 <div #messageList>
                     <ng-container *ngTemplateOutlet="conversationsTemplate; context: {conversations: conversations.conversations}"></ng-container>
