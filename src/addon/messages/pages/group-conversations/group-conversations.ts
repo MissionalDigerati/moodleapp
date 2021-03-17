@@ -52,18 +52,9 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
     /**
      * Settings to get all messages
      */
-    all: AddonMessagesGroupConversationOption = {
+    conversations: AddonMessagesGroupConversationOption = {
         type: null,
         favourites: null,
-        count: 0,
-        unread: 0,
-    };
-    /**
-     * Settings to get favorite messages
-     */
-    favourites: AddonMessagesGroupConversationOption = {
-        type: null,
-        favourites: true,
         count: 0,
         unread: 0,
     };
@@ -119,7 +110,7 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
                 conversation.lastmessagedate = data.timecreated / 1000;
 
                 // Sort the affected list.
-                this.all.conversations = this.messagesProvider.sortConversations(this.all.conversations);
+                this.conversations.conversations = this.messagesProvider.sortConversations(this.conversations.conversations);
 
                 if (isNewer) {
                     // The last message is newer than the previous one, scroll to top to keep viewing the conversation.
@@ -216,9 +207,13 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
         }
 
         this.fetchData().then(() => {
-            if (!this.conversationId && !this.discussionUserId && this.splitviewCtrl.isOn() && this.all.conversations.length > 0) {
+            if ((!this.conversationId) &&
+                (!this.discussionUserId) &&
+                (this.splitviewCtrl.isOn()) &&
+                (this.conversations.conversations.length > 0)
+            ) {
                 // Load the first conversation.
-                const  conversation = this.all.conversations[0];
+                const  conversation = this.conversations.conversations[0];
                 this.gotoConversation(conversation.id);
             }
         });
@@ -227,32 +222,15 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
     /**
      * Fetch conversations.
      *
-     * @return Promise resolved when done.
-     */
-    protected fetchData(): Promise<any> {
-        this.loadingMessage = this.loadingString;
-
-        return this.fetchDataForOption(this.all, false).then(() => {
-            console.log(this.all.conversations);
-        }).catch((error) => {
-            this.domUtils.showErrorModalDefault(error, 'addon.messages.errorwhileretrievingdiscussions', true);
-        }).finally(() => {
-            this.loaded = true;
-        });
-    }
-
-    /**
-     * Fetch data for a certain option.
-     *
-     * @param option The option to fetch data for.
      * @param loadingMore Whether we are loading more data or just the first ones.
      * @return Promise resolved when done.
      */
-    fetchDataForOption(option: AddonMessagesGroupConversationOption, loadingMore?: boolean): Promise<void> {
-        option.loadMoreError = false;
+    protected fetchData(loadingMore?: boolean): Promise<any> {
+        this.loadingMessage = this.loadingString;
+        this.conversations.loadMoreError = false;
 
-        const limitFrom = loadingMore ? option.conversations.length : 0,
-            promises = [];
+        const limitFrom = loadingMore ? this.conversations.conversations.length : 0;
+        const promises = [];
         let data: {conversations: AddonMessagesConversationForList[], canLoadMore: boolean},
             offlineMessages;
 
@@ -260,7 +238,12 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
         promises.push(this.messagesProvider.invalidateConversations(this.siteId).catch(() => {
             // Shouldn't happen.
         }).then(() => {
-            return this.messagesProvider.getConversations(option.type, option.favourites, limitFrom, this.siteId);
+            return this.messagesProvider.getConversations(
+                this.conversations.type,
+                this.conversations.favourites,
+                limitFrom,
+                this.siteId
+            );
         }).then((result) => {
             data = result;
         }));
@@ -273,19 +256,25 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
 
         return Promise.all(promises).then(() => {
             if (loadingMore) {
-                option.conversations = option.conversations.concat(data.conversations);
-                option.canLoadMore = data.canLoadMore;
+                this.conversations.conversations = this.conversations.conversations.concat(data.conversations);
+                this.conversations.canLoadMore = data.canLoadMore;
             } else {
-                option.conversations = data.conversations;
-                option.canLoadMore = data.canLoadMore;
+                this.conversations.conversations = data.conversations;
+                this.conversations.canLoadMore = data.canLoadMore;
 
                 if (offlineMessages && offlineMessages.length) {
                     return this.loadOfflineMessages(offlineMessages).then(() => {
                         // Sort the conversations, the offline messages could affect the order.
-                        option.conversations = this.messagesProvider.sortConversations(option.conversations);
+                        this.conversations.conversations = this.messagesProvider.sortConversations(
+                            this.conversations.conversations
+                        );
                     });
                 }
             }
+        }).catch((error) => {
+            this.domUtils.showErrorModalDefault(error, 'addon.messages.errorwhileretrievingdiscussions', true);
+        }).finally(() => {
+            this.loaded = true;
         });
     }
 
@@ -294,13 +283,12 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
      *
      * @param conversationId The conversation ID to search.
      * @param userId User ID to search (if no conversationId).
-     * @param option The option to search in. If not defined, search in all options.
      * @return Conversation.
      */
-    protected findConversation(conversationId: number, userId?: number, option?: AddonMessagesGroupConversationOption)
+    protected findConversation(conversationId: number, userId?: number)
             : AddonMessagesConversationForList {
 
-        const conversations = option ? (option.conversations || []) : (this.all.conversations || []);
+        const conversations = this.conversations.conversations || [];
 
         return conversations.find((conv) => {
             if (conversationId) {
@@ -349,14 +337,13 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
     /**
      * Function to load more conversations.
      *
-     * @param option The option to fetch data for.
      * @param infiniteComplete Infinite scroll complete function. Only used from core-infinite-loading.
      * @return Promise resolved when done.
      */
-    loadMoreConversations(option: AddonMessagesGroupConversationOption, infiniteComplete?: any): Promise<void> {
-        return this.fetchDataForOption(option, true).catch((error) => {
+    loadMoreConversations(infiniteComplete?: any): Promise<void> {
+        return this.fetchData(true).catch((error) => {
             this.domUtils.showErrorModalDefault(error, 'addon.messages.errorwhileretrievingdiscussions', true);
-            option.loadMoreError = true;
+            this.conversations.loadMoreError = true;
         }).finally(() => {
             infiniteComplete && infiniteComplete();
         });
@@ -432,7 +419,7 @@ export class AddonMessagesGroupConversationsPage implements OnInit, OnDestroy {
      * @param conversation Offline conversation to add.
      */
     protected addOfflineConversation(conversation: any): void {
-        this.all.conversations.unshift(conversation);
+        this.conversations.conversations.unshift(conversation);
     }
 
     /**

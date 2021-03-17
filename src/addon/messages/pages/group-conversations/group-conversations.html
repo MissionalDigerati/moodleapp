@@ -32,14 +32,14 @@
                 </a>
                 <!-- All conversations. -->
                 <div #messageList>
-                    <ng-container *ngTemplateOutlet="conversationsTemplate; context: {conversations: all.conversations}"></ng-container>
+                    <ng-container *ngTemplateOutlet="conversationsTemplate; context: {conversations: conversations.conversations}"></ng-container>
                     <!-- The infinite loading cannot be inside the ng-template, it fails because it doesn't find ion-content. -->
-                    <core-infinite-loading [enabled]="all.canLoadMore" (action)="loadMoreConversations(all, $event)" [error]="all.loadMoreError"></core-infinite-loading>
-                    <ion-item text-wrap *ngIf="all.conversations && all.conversations.length == 0">
+                    <core-infinite-loading [enabled]="conversations.canLoadMore" (action)="loadMoreConversations($event)" [error]="conversations.loadMoreError"></core-infinite-loading>
+                    <ion-item text-wrap *ngIf="conversations.conversations && conversations.conversations.length == 0">
                         <p>{{ 'addon.messages.nomessagesfound' | translate }}</p>
                     </ion-item>
                 </div>
-                <ion-item text-center *ngIf="all.loading">
+                <ion-item text-center *ngIf="conversations.loading">
                     <ion-spinner></ion-spinner>
                 </ion-item>
             </ion-list>
