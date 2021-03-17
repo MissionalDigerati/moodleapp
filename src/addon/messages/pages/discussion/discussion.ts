@@ -1049,7 +1049,7 @@ export class AddonMessagesDiscussionPage implements OnDestroy {
                 if (!this.viewDestroyed) {
                     this.domUtils.scrollToBottom(this.content, 0);
                 }
-            });
+            }, 1000);
             this.scrollBottom = false;
 
             // Reset the badge.
