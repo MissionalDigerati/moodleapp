@@ -2,6 +2,13 @@
     <ion-navbar core-back-button>
         <ion-title>{{ 'addon.messages.messages' | translate }}</ion-title>
         <ion-buttons end>
+            <button ion-button icon-only (click)="gotoContacts($event)" [attr.aria-label]="'addon.messages.contacts' | translate">
+              <core-icon name="fa-pencil-square-o"></core-icon>
+            </button>
+            <button ion-button icon-only (click)="toggleFavourites()" [attr.aria-label]="'core.favourites' | translate">
+              <div [hidden]="showOnlyFavourites"><core-icon name="fa-star-o"></core-icon></div>
+              <div [hidden]="!showOnlyFavourites"><core-icon name="fa-star"></core-icon></div>
+            </button>
             <button ion-button icon-only (click)="gotoSearch()" [attr.aria-label]="'addon.messages.search' | translate">
                 <ion-icon name="search"></ion-icon>
             </button>
@@ -21,67 +28,18 @@
 
         <core-loading [hideUntil]="loaded" [message]="loadingMessage">
             <ion-list>
-                <a ion-item text-wrap (click)="gotoContacts($event)" [attr.aria-label]="'addon.messages.contacts' | translate" class="addon-message-discussion">
-                    <ion-icon name="person" item-start></ion-icon>
-                    <h2>{{ 'addon.messages.contacts' | translate }}</h2>
-                    <ion-badge *ngIf="contactRequestsCount > 0" item-end>{{contactRequestsCount}}</ion-badge>
-                </a>
-                <!-- Favourite conversations. -->
-                <ion-item-divider text-wrap (click)="toggle(favourites)" class="core-expandable">
-                    <core-icon *ngIf="!favourites.expanded" name="fa-caret-right" item-start></core-icon>
-                    <core-icon *ngIf="favourites.expanded" name="fa-caret-down" item-start></core-icon>
-                    {{ 'core.favourites' | translate }} ({{ favourites.count }})
-                    <ion-badge item-end *ngIf="favourites.unread">{{ favourites.unread }}</ion-badge>
-                </ion-item-divider>
-                <div [hidden]="!favourites.conversations || !favourites.expanded || favourites.loading" #favlist>
-                    <ng-container *ngTemplateOutlet="conversationsTemplate; context: {conversations: favourites.conversations}"></ng-container>
+                <!-- All conversations. -->
+                <div #messageList>
+                    <ng-container *ngTemplateOutlet="conversationsTemplate; context: {conversations: conversations.conversations}"></ng-container>
                     <!-- The infinite loading cannot be inside the ng-template, it fails because it doesn't find ion-content. -->
-                    <core-infinite-loading [enabled]="favourites.canLoadMore" (action)="loadMoreConversations(favourites, $event)" [error]="favourites.loadMoreError"></core-infinite-loading>
-                    <ion-item text-wrap *ngIf="favourites.conversations && favourites.conversations.length == 0">
-                        <p>{{ 'addon.messages.nofavourites' | translate }}</p>
+                    <core-infinite-loading [enabled]="conversations.canLoadMore" (action)="loadMoreConversations($event)" [error]="conversations.loadMoreError"></core-infinite-loading>
+                    <ion-item text-wrap *ngIf="conversations.conversations && conversations.conversations.length == 0">
+                        <p>{{ 'addon.messages.nomessagesfound' | translate }}</p>
                     </ion-item>
                 </div>
-                <ion-item text-center *ngIf="favourites.loading">
+                <ion-item text-center *ngIf="conversations.loading">
                     <ion-spinner></ion-spinner>
                 </ion-item>
-
-                <!-- Group conversations. -->
-                <ion-item-divider text-wrap (click)="toggle(group)" class="core-expandable">
-                    <core-icon *ngIf="!group.expanded" name="fa-caret-right" item-start></core-icon>
-                    <core-icon *ngIf="group.expanded" name="fa-caret-down" item-start></core-icon>
-                    {{ 'addon.messages.groupconversations' | translate }} ({{ group.count }})
-                    <ion-badge item-end *ngIf="group.unread">{{ group.unread }}</ion-badge>
-                </ion-item-divider>
-                <div [hidden]="!group.conversations || !group.expanded || group.loading" #grouplist>
-                    <ng-container *ngTemplateOutlet="conversationsTemplate; context: {conversations: group.conversations}"></ng-container>
-                    <!-- The infinite loading cannot be inside the ng-template, it fails because it doesn't find ion-content. -->
-                    <core-infinite-loading [enabled]="group.canLoadMore" (action)="loadMoreConversations(group, $event)" [error]="group.loadMoreError"></core-infinite-loading>
-                    <ion-item text-wrap *ngIf="group.conversations && group.conversations.length == 0">
-                        <p>{{ 'addon.messages.nogroupconversations' | translate }}</p>
-                    </ion-item>
-                </div>
-                <ion-item text-center *ngIf="group.loading">
-                    <ion-spinner></ion-spinner>
-                </ion-item>
-
-                <ion-item-divider text-wrap (click)="toggle(individual)" class="core-expandable">
-                    <core-icon *ngIf="!individual.expanded" name="fa-caret-right" item-start></core-icon>
-                    <core-icon *ngIf="individual.expanded" name="fa-caret-down" item-start></core-icon>
-                    {{ 'addon.messages.individualconversations' | translate }} ({{ individual.count }})
-                    <ion-badge item-end *ngIf="individual.unread">{{ individual.unread }}</ion-badge>
-                </ion-item-divider>
-                <div [hidden]="!individual.conversations || !individual.expanded || individual.loading" #indlist>
-                    <ng-container *ngTemplateOutlet="conversationsTemplate; context: {conversations: individual.conversations}"></ng-container>
-                    <!-- The infinite loading cannot be inside the ng-template, it fails because it doesn't find ion-content. -->
-                    <core-infinite-loading [enabled]="individual.canLoadMore" (action)="loadMoreConversations(individual, $event)" [error]="individual.loadMoreError"></core-infinite-loading>
-                    <ion-item text-wrap *ngIf="individual.conversations && individual.conversations.length == 0">
-                        <p>{{ 'addon.messages.noindividualconversations' | translate }}</p>
-                    </ion-item>
-                </div>
-                <ion-item text-center *ngIf="individual.loading">
-                    <ion-spinner></ion-spinner>
-                </ion-item>
-
             </ion-list>
         </core-loading>
     </ion-content>
@@ -89,7 +47,7 @@
 
 <!-- Template to render a list of conversations. -->
 <ng-template #conversationsTemplate let-conversations="conversations">
-    <a ion-item text-wrap *ngFor="let conversation of conversations" [title]="conversation.name" (click)="gotoConversation(conversation.id, conversation.userid)" [class.core-split-item-selected]="(conversation.id && conversation.id == selectedConversationId) || (conversation.userid && conversation.userid == selectedUserId)" class="addon-message-discussion" id="addon-message-conversation-{{ conversation.id ? conversation.id : 'user-' + conversation.userid }}">
+    <a [hidden]="showOnlyFavourites && (!conversation.isfavourite)" ion-item text-wrap *ngFor="let conversation of conversations" [title]="conversation.name" (click)="gotoConversation(conversation.id, conversation.userid)" [class.core-split-item-selected]="(conversation.id && conversation.id == selectedConversationId) || (conversation.userid && conversation.userid == selectedUserId)" class="addon-message-discussion" id="addon-message-conversation-{{ conversation.id ? conversation.id : 'user-' + conversation.userid }}">
         <!-- Group conversation image. -->
         <ion-avatar item-start *ngIf="conversation.type == typeGroup">
             <img [src]="conversation.imageurl" [alt]="conversation.name" core-external-content onError="this.src='assets/img/group-avatar.png'">

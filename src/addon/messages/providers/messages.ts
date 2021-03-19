@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { Injectable } from '@angular/core';
+import { CoreCoursesProvider } from '@core/courses/providers/courses';
 import { CoreLoggerProvider } from '@providers/logger';
 import { CoreSitesProvider } from '@providers/sites';
 import { CoreAppProvider } from '@providers/app';
@@ -61,7 +62,8 @@ export class AddonMessagesProvider {
     constructor(logger: CoreLoggerProvider, private sitesProvider: CoreSitesProvider, private appProvider: CoreAppProvider,
             private userProvider: CoreUserProvider, private messagesOffline: AddonMessagesOfflineProvider,
             private utils: CoreUtilsProvider, private timeUtils: CoreTimeUtilsProvider,
-            private emulatorHelper: CoreEmulatorHelperProvider, private eventsProvider: CoreEventsProvider) {
+            private emulatorHelper: CoreEmulatorHelperProvider, private eventsProvider: CoreEventsProvider,
+            private courseProvider: CoreCoursesProvider) {
         this.logger = logger.getInstance('AddonMessagesProvider');
     }
 
@@ -654,15 +656,59 @@ export class AddonMessagesProvider {
                 }
 
                 this.userProvider.storeUsers(contacts, site.id);
+                const ids = contacts.map((contact) => {
+                    return contact.id;
+                });
 
-                if (limitNum <= 0) {
-                    return { contacts, canLoadMore: false };
-                }
+                return this.getClassPeers(siteId, ids).then((peers) => {
+                    contacts = contacts.concat(peers);
+                    contacts.sort((a, b) => (a.fullname > b.fullname) ? 1 : ((b.fullname > a.fullname) ? -1 : 0));
 
-                return {
-                    contacts: contacts.slice(0, limitNum),
-                    canLoadMore: contacts.length > limitNum
-                };
+                    if (limitNum <= 0) {
+                        return { contacts, canLoadMore: false };
+                    }
+
+                    return {
+                        contacts: contacts.slice(0, limitNum),
+                        canLoadMore: contacts.length > limitNum
+                    };
+                });
+            });
+        });
+    }
+
+    /**
+     * Get a list of all class peers.
+     *
+     * @param   siteId      Site ID. If not defined, use current site.
+     * @param   ids         A list of ids to exclude from list. []
+     * @return              A list of peers
+     * @access  protected
+     */
+    protected getClassPeers(siteId?: string, ids: number[] = []): Promise<any[]> {
+
+        return this.courseProvider.getUserCourses(true, siteId).then((courses: any[]) => {
+            const promises = [];
+            courses.forEach((course: any) => {
+                promises.push(
+                    this.userProvider.getParticipants(course.id, 0, -1, siteId, false).then((data) => {
+                        return data.participants;
+                    })
+                );
+            });
+
+            return Promise.all(promises).then((data) => {
+                const mates = [];
+                data.forEach((participants) =>  {
+                    participants.forEach((participant) => {
+                        if (ids.indexOf(participant.id) === -1) {
+                            ids.push(participant.id);
+                            mates.push(participant);
+                        }
+                    });
+                });
+
+                return mates;
             });
         });
     }
