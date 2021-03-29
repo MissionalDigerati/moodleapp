@@ -651,10 +651,6 @@ export class AddonMessagesProvider {
             return site.read('core_message_get_user_contacts', params, preSets)
                     .then((contacts: AddonMessagesConversationMember[]) => {
 
-                if (!contacts || !contacts.length) {
-                    return { contacts: [], canLoadMore: false };
-                }
-
                 this.userProvider.storeUsers(contacts, site.id);
                 const ids = contacts.map((contact) => {
                     return contact.id;
