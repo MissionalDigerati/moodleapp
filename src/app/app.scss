@@ -355,7 +355,7 @@ ion-app.app-root {
     height: auto;
   }
 
-  audio.core-media-adapt-width {
+  audio.core-media-adapt-width.full-width {
     width: 100%;
   }
 
@@ -1158,6 +1158,7 @@ details summary {
   pointer-events: auto;
 }
 
+.icon.fa-book,
 .icon.fa-graduation-cap,
 .item > .icon.fa,
 .item-inner > .icon.fa {
