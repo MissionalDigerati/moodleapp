@@ -1,7 +1,7 @@
 {
-    "app_id": "com.moodle.moodlemobile",
-    "appname": "Moodle Mobile",
-    "desktopappname": "Moodle Desktop",
+    "app_id": "org.relaytrust.thewell",
+    "appname": "The Well",
+    "desktopappname": "The Well Desktop",
     "versioncode": 3940,
     "versionname": "3.9.4",
     "cache_update_frequency_usually": 420000,
@@ -104,10 +104,10 @@
     "forceLoginLogo": false,
     "ioswebviewscheme": "moodleappfs",
     "appstores": {
-        "android": "com.moodle.moodlemobile",
-        "ios": "id633359593",
-        "windows": "moodle-desktop\/9p9bwvhdc8c8",
-        "mac": "id1255924440",
-        "linux": "https:\/\/download.moodle.org\/desktop\/download.php?platform=linux&arch=64"
+        "android": "org.relaytrust.thewell",
+        "ios": "",
+        "windows": "",
+        "mac": "",
+        "linux": ""
     }
 }

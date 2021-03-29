@@ -30,7 +30,7 @@ export class AddonCalendarHelperProvider {
     protected logger;
 
     static EVENTICONS = {
-        course: 'fa-graduation-cap',
+        course: 'fa-book',
         group: 'people',
         site: 'globe',
         user: 'person',
