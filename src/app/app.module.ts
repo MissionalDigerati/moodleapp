@@ -25,6 +25,7 @@ import { MockLocationStrategy } from '@angular/common/testing';
 import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 
+import { AndroidPermissions } from '@ionic-native/android-permissions';
 import { Diagnostic } from '@ionic-native/diagnostic';
 import { Geolocation } from '@ionic-native/geolocation';
 import { ScreenOrientation } from '@ionic-native/screen-orientation';
@@ -62,6 +63,7 @@ import { CoreSyncProvider } from '@providers/sync';
 import { CoreFileHelperProvider } from '@providers/file-helper';
 import { CoreCustomURLSchemesProvider } from '@providers/urlschemes';
 import { CoreGeolocationProvider } from '@providers/geolocation';
+import { ChatAttachmentHelperProvider } from '@providers/chat-attachment-helper';
 
 // Handlers.
 import { CoreSiteInfoCronHandler } from '@providers/handlers/site-info-cron-handler';
@@ -348,11 +350,13 @@ export const WP_PROVIDER: any = null;
         CoreCustomURLSchemesProvider,
         CoreGeolocationProvider,
         CoreSiteInfoCronHandler,
+        ChatAttachmentHelperProvider,
         {
             provide: HTTP_INTERCEPTORS,
             useClass: CoreInterceptor,
             multi: true,
         },
+        AndroidPermissions,
         Diagnostic,
         Geolocation,
         ScreenOrientation,

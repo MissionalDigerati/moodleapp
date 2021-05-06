@@ -13,6 +13,9 @@
 // limitations under the License.
 
 import { Component, Input, Output, EventEmitter, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { ActionSheetController, ActionSheet, Platform } from 'ionic-angular';
+import { AndroidPermissions } from '@ionic-native/android-permissions';
 import { CoreAppProvider } from '@providers/app';
 import { CoreConfigProvider } from '@providers/config';
 import { CoreEventsProvider } from '@providers/events';
@@ -21,6 +24,9 @@ import { CoreUtilsProvider } from '@providers/utils/utils';
 import { CoreTextUtilsProvider } from '@providers/utils/text';
 import { CoreDomUtilsProvider } from '@providers/utils/dom';
 import { CoreConstants } from '@core/constants';
+import { CoreFileUploaderHelperProvider } from '@core/fileuploader/providers/helper';
+import { Sanitizer } from '@classes/sanitizer';
+import { take } from 'rxjs/operators';
 
 /**
  * Component to display a "send message form".
@@ -45,8 +51,28 @@ export class CoreSendMessageFormComponent implements OnInit {
     @Output() onResize: EventEmitter<void>; // Emit when resizing the textarea.
 
     @ViewChild('messageForm') formElement: ElementRef;
+    /**
+     * Can we use the audio?
+     */
+    canUseAudio = false;
+    /**
+     * Can we use the camera?
+     */
+    canUseCamera = false;
+    /**
+     * Can we use the video recorder?
+     */
+    canUseVideo = false;
+    /**
+     * Can we get an attachment?
+     */
+    canGetAttachment = false;
 
     protected sendOnEnter: boolean;
+    /**
+     * Our actionsheet for photo picking
+     */
+    protected actionSheet: ActionSheet;
 
     constructor(protected utils: CoreUtilsProvider,
             protected textUtils: CoreTextUtilsProvider,
@@ -54,7 +80,12 @@ export class CoreSendMessageFormComponent implements OnInit {
             protected eventsProvider: CoreEventsProvider,
             protected sitesProvider: CoreSitesProvider,
             protected appProvider: CoreAppProvider,
-            protected domUtils: CoreDomUtilsProvider) {
+            protected domUtils: CoreDomUtilsProvider,
+            protected fileUploaderHelper: CoreFileUploaderHelperProvider,
+            protected http: HttpClient,
+            protected actionSheetCtrl: ActionSheetController,
+            protected androidPermissions: AndroidPermissions,
+            protected platform: Platform) {
 
         this.onSubmit = new EventEmitter();
         this.onResize = new EventEmitter();
@@ -66,10 +97,232 @@ export class CoreSendMessageFormComponent implements OnInit {
         eventsProvider.on(CoreEventsProvider.SEND_ON_ENTER_CHANGED, (newValue) => {
             this.sendOnEnter = newValue;
         }, sitesProvider.getCurrentSiteId());
+
+        this.canUseAudio = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderAudio');
+        this.canUseCamera = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderCamera');
+        this.canUseVideo = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderVideo');
+        this.canGetAttachment = this.fileUploaderHelper.isHandlerEnabled('CoreFileUploaderFile');
     }
 
     ngOnInit(): void {
         this.showKeyboard = this.utils.isTrueOrOne(this.showKeyboard);
+    }
+
+    /**
+     * Pick whether to use the camera or the album?
+     *
+     * @param $event The event that triggered this.
+     *
+     */
+    pickAttachment($event: Event): void {
+        this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+            if (result) {
+                this.addAttachment('document', $event);
+            }
+        });
+    }
+
+    /**
+     * Pick the audio recording
+     *
+     * @param $event The event that triggered this.
+     *
+     */
+    pickAudio($event: Event): void {
+        this.checkPermission(this.androidPermissions.PERMISSION.RECORD_AUDIO).then((result: boolean) => {
+            if (result) {
+                this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+                    if (result) {
+                        this.addAttachment('audio', $event);
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Pick whether to use the camera or the album?
+     *
+     * @param $event The event that triggered this.
+     *
+     */
+    pickPhoto($event: Event): void {
+        $event.preventDefault();
+        $event.stopPropagation();
+        this.actionSheet = this.actionSheetCtrl.create({
+            title: '',
+            cssClass: 'photo-picker-action',
+            buttons: [
+                {
+                    text: '',
+                    icon: 'camera',
+                    cssClass: 'side-by-side',
+                    handler: (): boolean => {
+                        this.addAttachment('photo', null);
+
+                        return true;
+                    }
+                },
+                {
+                    text: '',
+                    icon: 'images',
+                    cssClass: 'side-by-side',
+                    handler: (): boolean => {
+                        this.addAttachment('album', null);
+
+                        return true;
+                    }
+                }
+            ]
+        });
+        this.checkPermission(this.androidPermissions.PERMISSION.CAMERA).then((result: boolean) => {
+            if (result) {
+                this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+                    if (result) {
+                        this.actionSheet.present();
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * We want to pick a video file.
+     *
+     * @param $event The event that triggered this.
+     */
+    pickVideo($event: Event): void {
+        this.checkPermission(this.androidPermissions.PERMISSION.CAMERA).then((result: boolean) => {
+            if (result) {
+                this.checkPermission(this.androidPermissions.PERMISSION.READ_EXTERNAL_STORAGE).then((result: boolean) => {
+                    if (result) {
+                        this.checkPermission(this.androidPermissions.PERMISSION.RECORD_AUDIO).then((result: boolean) => {
+                            if (result) {
+                                this.addAttachment('video', $event);
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
+
+    /**
+     * Ad an attachment to the chat. Chat messages will be
+     * <attachment type="video" id="moodleFileID">
+     *
+     * @param   mediaType   The type of media to attach (audio, document, photo, video)
+     * @param   $event      Event that triggered it.
+     * @return  void
+     */
+    addAttachment(mediaType: string, $event: Event): void {
+        if ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+        }
+        if (this.actionSheet) {
+            this.actionSheet.dismiss();
+            this.actionSheet = null;
+        }
+        let handlerName = '';
+        switch (mediaType) {
+            case 'album':
+                handlerName = 'CoreFileUploaderAlbum';
+                break;
+            case 'audio':
+                handlerName = 'CoreFileUploaderAudio';
+                break;
+            case 'document':
+                handlerName = 'CoreFileUploaderFile';
+                break;
+            case 'photo':
+                handlerName = 'CoreFileUploaderCamera';
+                break;
+            case 'video':
+                handlerName = 'CoreFileUploaderVideo';
+                break;
+            default:
+                handlerName = '';
+                break;
+        }
+        if (handlerName === '') {
+
+            return;
+        }
+        this.fileUploaderHelper.triggerHandlerActionByName(
+            handlerName,
+            -1,
+            true,
+            false,
+            []
+        ).then((result) => {
+            if (!('itemid' in result)) {
+                return;
+            }
+            const content = Sanitizer.encodeHTML(
+                `<attachment type="${mediaType}" id="${result.itemid}" filepath="${result.filepath}" filename="${result.filename}">`
+            );
+
+            return this.sitesProvider.getSite().then((site) => {
+                const url = `${site.siteUrl}/local/chat_attachments/api.php`;
+                const headers = {
+                    headers: {
+                        'content-type': 'application/json'
+                    }
+                };
+                const params = {
+                    token: site.token,
+                    method: 'add_file',
+                    item_id: result.itemid,
+                };
+                this.http.post(url, params, headers).pipe(take(1)).subscribe(() => {
+                    this.onSubmit.emit(content);
+                });
+            });
+        });
+    }
+
+    protected checkPermission(permission: any): Promise<any> {
+        if (!this.platform.is('android')) {
+
+            return Promise.resolve(true);
+        }
+
+        return this.androidPermissions.checkPermission(permission).then((result: any) => {
+            if (result.hasPermission) {
+
+                return Promise.resolve(true);
+            }
+
+            return this.androidPermissions.requestPermission(permission).then((reqResult: any) => {
+
+                return Promise.resolve(reqResult.hasPermission);
+            });
+        });
+    }
+
+    /**
+     * Returns an empty string if we should shrink the text area, otherwise returns null
+     *
+     * @return an empty string or null
+     */
+    get whenShrunk(): string | null {
+        return (
+            (!this.message) &&
+            (this.canUseCamera || this.canUseVideo || this.canGetAttachment || this.canUseAudio)
+        ) ? '' : null;
+    }
+
+    /**
+     * Returns an empty string if we should stretch the text area, otherwise returns null
+     *
+     * @return an empty string or null
+     */
+    get whenStretched(): string | null {
+        return (
+            (this.message) ||
+            ((!this.canUseCamera) && (!this.canUseVideo) && (!this.canGetAttachment) && (!this.canUseAudio))
+        ) ? '' : null;
     }
 
     /**

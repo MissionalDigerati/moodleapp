@@ -295,6 +295,17 @@ export class CoreFileUploaderHelperProvider {
     }
 
     /**
+     * Is the given handler enabled for uploading. The names can be found in the
+     * handler files of this providers directory.
+     *
+     * @param  name The name of the provider
+     * @return      enabled?
+     */
+    isHandlerEnabled(name: string): boolean {
+      return this.uploaderDelegate.hasHandler(name, true);
+    }
+
+    /**
      * Open the "file picker" to select and upload a file.
      *
      * @param maxSize Max size of the file to upload. If not defined or -1, no max size.
@@ -426,6 +437,80 @@ export class CoreFileUploaderHelperProvider {
     }
 
     /**
+     * Trigger the handler's action.  Handler's can be found in this directory.
+     *
+     * @param  handlerName  The name of the handler to use. See the handler file for the name
+     * @param maxSize       Max size of the file. If not defined or -1, no max size.
+     * @param upload        Whether the file should be uploaded.
+     * @param allowOffline  True to allow selecting in offline, false to require connection.
+     * @param mimetypes     List of supported mimetypes. If undefined, all mimetypes supported.
+     *
+     * @return              The result returned from the web service
+     * @link                https://docs.moodle.org/dev/Web_services_files_handling
+     */
+    triggerHandlerActionByName(handlerName: string, maxSize?: number, upload?: boolean, allowOffline?: boolean,
+        mimetypes?: string[]): Promise<any> {
+        if (!this.uploaderDelegate.hasHandler(handlerName, true)) {
+
+            return Promise.reject(`The handler ${handlerName} is not enabled!`);
+        }
+        const handler = this.uploaderDelegate.getHandlerDataByName(handlerName);
+        if (!handler) {
+
+            return Promise.reject(`The handler ${handlerName} is not available!`);
+        }
+        // Nothing to do, move along
+        if (!handler.action) {
+
+            return Promise.resolve(false);
+        }
+        if (!allowOffline && !this.appProvider.isOnline()) {
+            // Not allowed, show error.
+            this.domUtils.showErrorModal('core.fileuploader.errormustbeonlinetoupload', true);
+
+            return Promise.resolve(false);
+        }
+
+        if (handler.afterRender) {
+            setTimeout(() => {
+              handler.afterRender(maxSize, upload, allowOffline, handler.mimetypes);
+            }, 500);
+        }
+
+        return handler.action(maxSize, upload, allowOffline, handler.mimetypes).then((data) => {
+            if (data.treated) {
+                // The handler already treated the file. Return the result.
+
+                return data.result;
+            }
+            // The handler didn't treat the file, we need to do it.
+            if (data.fileEntry) {
+                // The handler provided us a fileEntry, use it.
+
+                return this.uploadFileEntry(data.fileEntry, data.delete, maxSize, upload, allowOffline);
+            }
+            if (data.path) {
+                // The handler provided a path. First treat it like it's a relative path.
+
+                return this.fileProvider.getFile(data.path).catch(() => {
+                    // File not found, it's probably an absolute path.
+
+                    return this.fileProvider.getExternalFile(data.path);
+                }).then((fileEntry) => {
+                    // File found, treat it.
+
+                    return this.uploadFileEntry(fileEntry, data.delete, maxSize, upload, allowOffline);
+                });
+            }
+
+            // Nothing received, fail.
+            return Promise.reject('No file received');
+        }).catch((error) => {
+            this.domUtils.showErrorModalDefault(error, this.translate.instant('core.fileuploader.errorreadingfile'));
+        });
+    }
+
+    /**
      * Convenience function to upload a file on a certain site, showing a confirm if needed.
      *
      * @param fileEntry FileEntry of the file to upload.
@@ -536,11 +621,8 @@ export class CoreFileUploaderHelperProvider {
 
             media = medias[0]; // We used limit 1, we only want 1 media.
         } catch (error) {
-
-            if (isAudio && this.isNoAppError(error) && this.appProvider.isMobile() &&
-                    (!this.platform.is('android') || this.platform.version().major < 10)) {
+            if (isAudio && this.isNoAppError(error) && this.appProvider.isMobile()) {
                 // No app to record audio, fallback to capture it ourselves.
-                // In Android it will only be done in Android 9 or lower because there's a bug in the plugin.
                 try {
                     media = await this.fileUploaderProvider.captureAudioInApp();
                 } catch (error) {

@@ -161,28 +161,31 @@ export class CoreUserProvider {
 
         return this.sitesProvider.getSite(siteId).then((site) => {
             this.logger.debug(`Get participants for course '${courseId}' starting at '${limitFrom}'`);
-
+            const options: any[] = [
+                {
+                    name: 'sortby',
+                    value: 'siteorder'
+                }
+            ];
             const data = {
                     courseid: courseId,
-                    options: [
-                        {
-                            name: 'limitfrom',
-                            value: limitFrom
-                        },
-                        {
-                            name: 'limitnumber',
-                            value: limitNumber
-                        },
-                        {
-                            name: 'sortby',
-                            value: 'siteorder'
-                        }
-                    ]
+                    options: []
                 }, preSets: any = {
                     cacheKey: this.getParticipantsListCacheKey(courseId),
                     updateFrequency: CoreSite.FREQUENCY_RARELY
                 };
 
+            if (limitNumber !== -1) {
+                options.push({
+                        name: 'limitfrom',
+                        value: limitFrom
+                    });
+                options.push({
+                        name: 'limitnumber',
+                        value: limitNumber
+                    });
+            }
+            data.options = options;
             if (ignoreCache) {
                 preSets.getFromCache = false;
                 preSets.emergencyCache = false;

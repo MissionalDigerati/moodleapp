@@ -184,4 +184,41 @@ export class CoreFileUploaderDelegate extends CoreDelegate {
 
         return handlers;
     }
+
+    /**
+     * Get a handler by it's name.
+     *
+     * @param  handlerName  The name of the handler
+     * @return              The handler or null if not enabled
+     */
+    getHandlerByName(handlerName: string): CoreFileUploaderHandler | null {
+      let handler = null;
+      for (const name in this.enabledHandlers) {
+        if (name === handlerName) {
+          handler = <CoreFileUploaderHandler> this.enabledHandlers[name];
+          break;
+        }
+      }
+
+      return handler;
+    }
+
+    /**
+     * Get a handler's data by it's name.
+     *
+     * @param  handlerName  The name of the handler
+     * @return              The handler data or null if not enabled
+     */
+    getHandlerDataByName(handlerName: string): CoreFileUploaderHandlerDataToReturn | null {
+      const handler = this.getHandlerByName(handlerName);
+      if (!handler) {
+
+        return;
+      }
+      const data: CoreFileUploaderHandlerDataToReturn = handler.getData();
+      data.priority = handler.priority || 0;
+      data.mimetypes = null;
+
+      return data;
+    }
 }

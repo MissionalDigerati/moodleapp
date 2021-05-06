@@ -1,42 +1,36 @@
 {
   "project_info": {
-    "project_number": "",
-    "firebase_url": "",
-    "project_id": "",
-    "storage_bucket": ""
+    "project_number": "597328065145",
+    "project_id": "the-well-d1a2a",
+    "storage_bucket": "the-well-d1a2a.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:111111111111:android:1111111111111111",
+        "mobilesdk_app_id": "1:597328065145:android:61c7a66f435fc00a07daa8",
         "android_client_info": {
-          "package_name": "com.moodle.moodlemobile"
+          "package_name": "org.relaytrust.thewell"
         }
       },
       "oauth_client": [
         {
-          "client_id": "",
+          "client_id": "597328065145-648cpemcg1im4uasq82jr9v0mg6k8ue8.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": ""
-        },
-        {
-          "current_key": ""
+          "current_key": "AIzaSyDjDW_axWhk1hR1s3cWQ_ssnPid0GG2aKo"
         }
       ],
       "services": {
-        "analytics_service": {
-          "status": 1
-        },
         "appinvite_service": {
-          "status": 1,
-          "other_platform_oauth_client": []
-        },
-        "ads_service": {
-          "status": 2
+          "other_platform_oauth_client": [
+            {
+              "client_id": "597328065145-648cpemcg1im4uasq82jr9v0mg6k8ue8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
